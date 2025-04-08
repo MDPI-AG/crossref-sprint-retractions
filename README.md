@@ -39,7 +39,7 @@ Have a local copy of ROR-API running via Docker: https://github.com/ror-communit
    python src/analyze_rw_dataset.py
    ```
 
-# Notes / Todos
+# Notes
 
 General note: articles in RW may not have a DOI that is registered in CrossRef.
 We need to check if the DOI is registered in CrossRef.
@@ -67,3 +67,17 @@ Data fields in Retraction Watch (RW) data set:
    point.
 1. **retractionnature**: type of the retraction, which is any of:
    `['Retraction' 'Correction' 'Expression of concern' 'Reinstatement']`
+
+Data fileds of interest from the ROR dataset:
+
+1. **ror_id**: this is the ROR ID of the institution.
+1. **name**: this is the name of the institution.
+1. **country**: this is the country of the institution.
+1. **region**: this is the country subzone of the institution.
+
+Data fields of interest from the CrossRef dataset:
+
+1. **doi**: this is the DOI of the article.
+1. **container**: this is the title of the journal / conference / book series.
+1. **publisher**: this is the publisher of the journal / conference / book series.
+1. **type**: the publication type (journal-article, preprint, book-chapter, etc.)
