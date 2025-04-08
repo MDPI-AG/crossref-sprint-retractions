@@ -1,5 +1,15 @@
-# Data pipeline to fetch the latest £CSV from CrossRef repo:
-# https://gitlab.com/crossref/retraction-watch-data/-/raw/main/retraction_watch.csv?ref_type=heads&inline=false
+"""
+This script implements a simple ETL (Extract, Transform, Load) pipeline for processing 
+retraction data from the Retraction Watch database hosted on GitLab by CrossRef. The repo
+on GitLab receives almost daily updates.
+
+Steps:
+1. **Extract**: Downloads a CSV file containing retracted research articles.
+2. **Transform**: Cleans the data by normalizing column names and converting date fields to datetime objects.
+3. **Load**: Saves the processed data as a parquet file for efficient downstream usage.
+
+The output is stored in the `data/` directory as both CSV and Parquet formats.
+"""
 
 import os
 import requests
