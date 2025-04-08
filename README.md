@@ -8,6 +8,12 @@ pre- and post-retraction.
 
 # Running the Analysis
 
+## Prerequisites
+
+Have a local copy of ROR-API running via Docker: https://github.com/ror-community/ror-api#readme
+
+## Setup
+
 1. Clone the repository
 1. Active venv environment:
    ```bash
@@ -17,9 +23,16 @@ pre- and post-retraction.
    ```bash
    pip install -r requirements.txt
    ```
+
+## Runing the Scripts
+
 1. Run the pipeline to ETL the RW data set:
    ```bash
-   python src/pipeline.py
+   python src/pipeline_rw.py
+   ```
+1. Run the pipeline to match ROR IDs for affiliations:
+   ```bash
+   python src/pipeline_ror.py
    ```
 1. Dig into the RW data set:
    ```bash
@@ -45,7 +58,7 @@ Data fields in Retraction Watch (RW) data set:
 1. **urls**: needs preprocessing as may contain multiple URLs. Contains URL to Retraction
    Watch blog if any.
 1. **articletype**: this is the type of the article, which is any of:
-   `['retraction' 'expression-of-concern' 'correction' 'reinstatement']`
+   `['Clinical Study', 'Supplementary Materials', 'Auto/Biography', 'Interview/Q&A', 'Expression of Concern', 'Book Chapter/Reference Work', 'Case Report', 'Trade Magazines', 'Conference Abstract/Paper', 'Correction/Erratum/Corrigendum', 'Dissertation/Thesis', 'Preprint', 'Meta-Analysis', 'Commentary/Editorial', 'Research Article', 'Review Article', 'Article in Press', 'Other', 'Legal Case/Analysis', 'Retraction Notice', 'Technical Report/White Paper', 'Guideline', 'Government Publication', 'Letter', 'Retracted Article', 'Revision']`
    We will use this to filter out the articles we are interested in.
 1. **retractiondate**: we keep this info; we need to check if any cited-by publication is
    published after this date. Key data point.
