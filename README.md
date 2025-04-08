@@ -2,9 +2,29 @@
 
 ## Retractions Data Analysis
 
-Purpose: Connect retraction watch data set with references and cited-by
+Purpose: Connect Retraction Watch (RW) data set with references and cited-by
 data from CrossRef; e.g. analyze the doi prefixes citing retracted papers
 pre- and post-retraction.
+
+# Running the Analysis
+
+1. Clone the repository
+1. Active venv environment:
+   ```bash
+   source .venv/bin/activate
+   ```
+1. Install the requirements:
+   ```bash
+   pip install -r requirements.txt
+   ```
+1. Run the pipeline to ETL the RW data set:
+   ```bash
+   python src/pipeline.py
+   ```
+1. Dig into the RW data set:
+   ```bash
+   python src/analyze_rw_dataset.py
+   ```
 
 # Notes / Todos
 
