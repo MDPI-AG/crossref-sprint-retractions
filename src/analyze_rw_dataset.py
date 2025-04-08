@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 
 INPUT_DIR = "data"
-PARQUET = os.path.join(INPUT_DIR, "retraction_watch.parquet")
+PARQUET = os.path.join(INPUT_DIR, "retraction_watch_etl.parquet")
 
 # load the parquet file
 def load_parquet(file_path: str) -> pd.DataFrame:
@@ -87,6 +87,7 @@ def main():
 
     # unique values in 'retractionnature' and 'articletype' column
     columns_unique_values(df, 'retractionnature')
+    columns_unique_values(df, 'reason')
     columns_unique_values(df, 'articletype')
 
 if __name__ == "__main__":

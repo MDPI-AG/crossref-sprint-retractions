@@ -20,10 +20,12 @@ from pathlib import Path
 
 CSV_URL = "https://gitlab.com/crossref/retraction-watch-data/-/raw/main/retraction_watch.csv?ref_type=heads&inline=false"
 OUTPUT_DIR = "data"
-OUTPUT_CSV = os.path.join(OUTPUT_DIR, "retraction_watch.csv")
-OUTPUT_PARQUET = os.path.join(OUTPUT_DIR, "retraction_watch.parquet")
+OUTPUT_CSV_RAW = os.path.join(OUTPUT_DIR, "retraction_watch_raw.csv")
+OUTPUT_PARQUET_ETL = os.path.join(OUTPUT_DIR, "retraction_watch_etl.parquet")
+OUTPUT_CSV_ETL = os.path.join(OUTPUT_DIR, "retraction_watch_etl.csv")
 
 METADATA_CSV = os.path.join(OUTPUT_DIR, "metadata.csv")
+POLYFILL_CSV = os.path.join(OUTPUT_DIR, "retraction_watch_polyfill.csv")
 
 # init metadata
 metadata = {
@@ -108,10 +110,66 @@ def process_data(df: pd.DataFrame) -> pd.DataFrame:
         if col in df.columns:
             df[col] = pd.to_datetime(df[col], errors='coerce')
 
-    # handle the 'articletype' column: split by ; into list
-    if 'articletype' in df.columns:
-        df['articletype'] = df['articletype'].apply(lambda x: x.split(';') if isinstance(x, str) else [])
+    # handle the columns with multiple values separated by semicolon
+    multi_value_fields = ['urls', 'articletype', 'reason']
+    for field in multi_value_fields:
+        if field in df.columns:
+            df[field] = df[field].apply(lambda x: x.split(';') if isinstance(x, str) else [])
     
+    # drop fields we do not need from RW
+    drop_fields = ['record_id', 'retractionpubmedid', 'originalpaperpubmedid', 'title', 'subject', 'journal', 'publisher', 'country', 'author', 'paywalled']
+    df.drop(columns=drop_fields, inplace=True, errors='ignore')
+
+    return df
+
+def polyfill_originalpaperdoi(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Polyfill the originalpaperdoi column in the DataFrame.
+
+    Args:
+        df (pd.DataFrame): The DataFrame to polyfill.
+
+    Returns:
+        pd.DataFrame: The polyfilled DataFrame.
+    """
+    # polyfill 'originalpaperdoi' from 'retractiondoi' if the former is null
+    df.loc[df['originalpaperdoi'].isnull() & df['retractiondoi'].notnull(), 'originalpaperdoi'] = df['retractiondoi']
+    return df
+
+
+def polyfill_data(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Polyfill the DataFrame with additional data if needed.
+
+    Args:
+        df (pd.DataFrame): The DataFrame to polyfill.
+
+    Returns:
+        pd.DataFrame: The polyfilled DataFrame.
+    """
+    polyfill_df = pd.read_csv(POLYFILL_CSV)
+
+    for index, row in polyfill_df.iterrows():
+        doi = row['originalpaperdoi']
+        field = row['field']
+        value = row['value']
+
+        if doi in df['originalpaperdoi'].values:
+            df.loc[df['originalpaperdoi'] == doi, field] = value
+    
+    return df
+
+def drop_rows_with_empty_doi(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Drop rows with empty DOIs from the DataFrame.
+
+    Args:
+        df (pd.DataFrame): The DataFrame to process.
+
+    Returns:
+        pd.DataFrame: The DataFrame with rows containing empty DOIs removed.
+    """
+    df = df[df['originalpaperdoi'].notnull()]
     return df
 
 # save as parquet
@@ -126,6 +184,18 @@ def save_to_parquet(df: pd.DataFrame, output_path: str) -> None:
     df.to_parquet(output_path, index=False)
     print(f"Saved DataFrame to {output_path}")
 
+# save as csv
+def save_to_csv(df: pd.DataFrame, output_path: str) -> None:
+    """
+    Save the DataFrame to a CSV file.
+
+    Args:
+        df (pd.DataFrame): The DataFrame to save.
+        output_path (str): The path where the CSV file will be saved.
+    """
+    df.to_csv(output_path, index=False)
+    print(f"Saved DataFrame to {output_path}")
+
 def main() -> None:
     """
     Main function to execute the data pipeline.
@@ -138,18 +208,30 @@ def main() -> None:
     if metadata['rw-last-downloaded'] and metadata['rw-last-downloaded'] >= datetime.now().strftime("%Y-%m-%d"):
         print("Data already downloaded today. Skipping CSV download.")
     else:
-        download_csv(CSV_URL, OUTPUT_CSV)
+        download_csv(CSV_URL, OUTPUT_CSV_RAW)
         metadata['rw-last-downloaded'] = datetime.now().strftime("%Y-%m-%d")
         save_metadata()
 
     # Load the CSV file into a DataFrame
-    df = load_csv(OUTPUT_CSV)
+    df = load_csv(OUTPUT_CSV_RAW)
 
     # Process the DataFrame
     df = process_data(df)
 
-    # Save the DataFrame to a parquet file
-    save_to_parquet(df, OUTPUT_PARQUET)
+    # Polyfill the DataFrame with additional data
+    df = polyfill_originalpaperdoi(df)
+    df = polyfill_data(df)
+
+    # Drop rows that are left without originalpapedoi
+    pre_length = len(df)
+    df = drop_rows_with_empty_doi(df)
+    post_length = len(df)
+    print(f"Dropped {pre_length - post_length} rows with empty DOIs.")
+
+    # Save the ETL DataFrame to parquet and csv formats
+    save_to_parquet(df, OUTPUT_PARQUET_ETL)
+    save_to_csv(df, OUTPUT_CSV_ETL)
+
 
 if __name__ == "__main__":
     main()
