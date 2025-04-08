@@ -23,6 +23,34 @@ OUTPUT_DIR = "data"
 OUTPUT_CSV = os.path.join(OUTPUT_DIR, "retraction_watch.csv")
 OUTPUT_PARQUET = os.path.join(OUTPUT_DIR, "retraction_watch.parquet")
 
+METADATA_CSV = os.path.join(OUTPUT_DIR, "metadata.csv")
+
+metadata = {
+    "rw-last-downloaded": ""
+}
+
+def get_metadata() -> None:
+    """
+    Load metadata from the metadata CSV file.
+    """
+    if os.path.exists(METADATA_CSV):
+        metadata_df = pd.read_csv(METADATA_CSV)
+        for index, row in metadata_df.iterrows():
+            metadata[row['key']] = row['value']
+    else:
+        print(f"Metadata file {METADATA_CSV} does not exist. Creating a new one.")
+        metadata['rw-last-downloaded'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        save_metadata()
+        print(f"Metadata file {METADATA_CSV} created with initial values.")
+
+def save_metadata() -> None:
+    """
+    Save metadata to the metadata CSV file.
+    """
+    metadata_df = pd.DataFrame(list(metadata.items()), columns=['key', 'value'])
+    metadata_df.to_csv(METADATA_CSV, index=False)
+    print(f"Metadata saved to {METADATA_CSV}")
+
 def download_csv(url: str, output_path: str) -> None:
     """
     Download the CSV file from the given URL and save it to the specified output path.
@@ -75,6 +103,10 @@ def process_data(df: pd.DataFrame) -> pd.DataFrame:
         if col in df.columns:
             df[col] = pd.to_datetime(df[col], errors='coerce')
 
+    # handle the 'articletype' column: split by ; into list
+    if 'articletype' in df.columns:
+        df['articletype'] = df['articletype'].apply(lambda x: x.split(';') if isinstance(x, str) else [])
+    
     return df
 
 # save as parquet
@@ -96,8 +128,14 @@ def main() -> None:
     # Create output directory if it doesn't exist
     Path(OUTPUT_DIR).mkdir(parents=True, exist_ok=True)
 
-    # Download the CSV file
-    download_csv(CSV_URL, OUTPUT_CSV)
+    # only download if not downloaded today
+    get_metadata()
+    if metadata['rw-last-downloaded'] == datetime.now().strftime("%Y-%m-%d"):
+        print("Data already downloaded today. Skipping CSV download.")
+    else:
+        download_csv(CSV_URL, OUTPUT_CSV)
+        metadata['rw-last-downloaded'] = datetime.now().strftime("%Y-%m-%d")
+        save_metadata()
 
     # Load the CSV file into a DataFrame
     df = load_csv(OUTPUT_CSV)
@@ -108,4 +146,5 @@ def main() -> None:
     # Save the DataFrame to a parquet file
     save_to_parquet(df, OUTPUT_PARQUET)
 
-main()
+if __name__ == "__main__":
+    main()
