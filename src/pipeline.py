@@ -25,8 +25,9 @@ OUTPUT_PARQUET = os.path.join(OUTPUT_DIR, "retraction_watch.parquet")
 
 METADATA_CSV = os.path.join(OUTPUT_DIR, "metadata.csv")
 
+# init metadata
 metadata = {
-    "rw-last-downloaded": ""
+    'rw-last-downloaded': None,
 }
 
 def get_metadata() -> None:
@@ -35,8 +36,12 @@ def get_metadata() -> None:
     """
     if os.path.exists(METADATA_CSV):
         metadata_df = pd.read_csv(METADATA_CSV)
+        # print the df
+        print(f"Metadata loaded from {METADATA_CSV}:")
+        print(metadata_df)
+        
         for index, row in metadata_df.iterrows():
-            metadata[row['key']] = row['value']
+            metadata[row['name']] = row['value']
     else:
         print(f"Metadata file {METADATA_CSV} does not exist. Creating a new one.")
         metadata['rw-last-downloaded'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -130,7 +135,7 @@ def main() -> None:
 
     # only download if not downloaded today
     get_metadata()
-    if metadata['rw-last-downloaded'] == datetime.now().strftime("%Y-%m-%d"):
+    if metadata['rw-last-downloaded'] and metadata['rw-last-downloaded'] >= datetime.now().strftime("%Y-%m-%d"):
         print("Data already downloaded today. Skipping CSV download.")
     else:
         download_csv(CSV_URL, OUTPUT_CSV)
