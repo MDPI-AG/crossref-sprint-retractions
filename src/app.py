@@ -143,7 +143,7 @@ async def create_chart_year(
     # Plot
     plt.figure(figsize=(10, 6))
     filtered_df["value"].plot(kind="bar")
-    plt.title(get_chart_title("Evolution by Year", publisher, prefix, container, funder, retraction_type))
+    plt.title(get_chart_title("By Year", publisher, prefix, container, funder, retraction_type))
     plt.xlabel("Year")
     plt.ylabel("Value")
     plt.tight_layout()
@@ -181,7 +181,7 @@ async def create_chart_year(
     # Plot
     plt.figure(figsize=(10, 6))
     filtered_df["value"].plot(kind="bar")
-    plt.title(get_chart_title("Evolution by Article Type", publisher, prefix, container, funder, retraction_type))
+    plt.title(get_chart_title("By Article Type", publisher, prefix, container, funder, retraction_type))
     plt.xlabel("Article Type")
     plt.ylabel("Value")
     plt.tight_layout()
