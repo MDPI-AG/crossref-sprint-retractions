@@ -53,11 +53,14 @@ def fetch_cr_data(doi: str) -> dict:
 
         funder = None
         if 'funder' in msg:
-            funder = msg['funder'][0]['name'] if isinstance(msg['funder'], list) and len(msg['funder']) > 0 else msg['funder']['name']
-
+            if isinstance(msg['funder'], list) and len(msg['funder']) > 0:
+                funder = msg['funder'][0].get('name') if isinstance(msg['funder'], list) and len(msg['funder']) > 0 and 'name' in msg['funder'][0] else None
+            elif isinstance(msg.get('funder', {}), dict):
+                funder = msg['funder'].get('name')
+    
         return {
             "articletype": msg['type'],
-            "container": isinstance(msg['container-title'], list) and msg['container-title'][0] or msg['container-title'],
+            "container": msg['container-title'][0] if isinstance(msg['container-title'], list) and len(msg['container-title']) > 0 else msg['container-title'],
             "publisher": msg['publisher'],
             "funder": funder,
             "prefix": msg['prefix'],
@@ -82,23 +85,30 @@ def extract_cr_data(df_rw: pd.DataFrame) -> pd.DataFrame:
     count = 0
     for index, row in df_rw.iterrows():
         doi = row['originalpaperdoi']
-        if pd.notna(doi):
-            data = fetch_cr_data(doi)
-            if data:
-                for key, value in data.items():
-                    if isinstance(value, (list, np.ndarray, pd.Series)):
-                        value = value[0] if len(value) > 0 else None
-                    df_rw.at[index, key] = value
-            else:
-                # drop the row, could be a non CroddRef DOI
-                df_rw.drop(index, inplace=True)
+        
+        # skip if 'prefix' is already present and not euqls None or "<NA>" string
+        if pd.notna(row['prefix']) and row['prefix'] != "<NA>":
+            count += 1
+            continue
+
+        data = fetch_cr_data(doi)
+        if data:
+            for key, value in data.items():
+                if isinstance(value, (list, np.ndarray, pd.Series)):
+                    value = value[0] if len(value) > 0 else None
+                df_rw.at[index, key] = value
+        else:
+            # drop the row, could be a non CroddRef DOI
+            df_rw.drop(index, inplace=True)
         
         count += 1
         if count % 20 == 0:
-            time.sleep(1)
+            time.sleep(2)
 
         if count % 100 == 0:
             print(f"Processed {count} rows...")
+            save_parquet(df_rw , OUTPUT_RW_PARQUET)
+            save_csv(df_rw, OUTPUT_RW_CSV)
 
     print(f"Processed {count} rows in total.")
 

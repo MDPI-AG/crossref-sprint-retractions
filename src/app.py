@@ -1,4 +1,7 @@
-from fastapi import FastAPI, Query
+from fastapi import FastAPI, Query, Request
+from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
 from typing import Optional
 import pandas as pd
 import io
@@ -21,27 +24,71 @@ def load_parquet(file_path: str) -> pd.DataFrame:
     print(f"Loaded {len(df)} rows from {file_path}")
     return df
 
-#df = load_parquet(INPUT_RW_PARQUET)
+df = load_parquet(INPUT_RW_PARQUET)
 
 app = FastAPI()
 
-# Example DataFrame (replace this with your actual data loading logic)
-data = {
-    "publisher": ["Pub1", "Pub2", "Pub1", "Pub3"],
-    "journal": ["Journal1", "Journal2", "Journal1", "Journal3"],
-    "country": ["US", "UK", "US", "CA"],
-    #"region": ["US", "UK", "US", "CA"],
-    "institute": ["Inst1", "Inst2", "Inst1", "Inst3"],
-    "funder": ["Funder1", "Funder2", "Funder1", "Funder3"],
-    "retraction_reason": ["Reason1", "Reason2", "Reason1", "Reason3"],
-    "value": [10, 20, 30, 40],
-}
-df = pd.DataFrame(data)
+# Set up Jinja2 templates
+templates = Jinja2Templates(directory="./src/templates")
+
+# Serve static files (optional for styling)
+app.mount("/static", StaticFiles(directory="./src/static"), name="static")
+
+# get allowed filter values from df
+allowed_values = [
+    {
+        "param": "publisher",
+        "label": "Publisher Name",
+        "options": df["publisher"].unique()
+    }, 
+    {
+        "param": "prefix",
+        "label": "DOI Prefix",
+        "options": df["prefix"].unique()
+    },
+    {
+        "param": "container",
+        "label": "Container Title",
+        "options": df["container"].unique()
+    },
+    {
+        "param": "country",
+        "label": "Country Name",
+        "options": df["rorcountries"].unique()
+    },
+    {
+        "param": "institute",
+        "label": "Institute Name",
+        "options": df["rornames"].unique()
+    },
+    {
+        "param": "funder",
+        "label": "Funder Name",
+        "options": df["funder"].unique()
+    },
+    {
+        "param": "retraction_reason",
+        "label": "Retraction Type",
+        "options": df["reason"].unique()
+    },
+]
+
+# Convert the values to a list of strings
+for allowed_value in allowed_values:    
+    allowed_value["options"] = [str(value) for value in allowed_value["options"]]
+    allowed_value["options"] = sorted(allowed_value["options"])
+
+@app.get("/", response_class=HTMLResponse)
+async def dashboard(request: Request):
+    return templates.TemplateResponse("dashboard.html", {
+        "request": request,
+        "allowed_values": allowed_values,
+    })
 
 @app.get("/create-chart")
 def create_chart(
     publisher: Optional[str] = Query(None),
-    journal: Optional[str] = Query(None),
+    container: Optional[str] = Query(None),
     country: Optional[str] = Query(None),
     institute: Optional[str] = Query(None),
     funder: Optional[str] = Query(None),
@@ -51,8 +98,8 @@ def create_chart(
     filtered_df = df.copy()
     if publisher:
         filtered_df = filtered_df[filtered_df["publisher"] == publisher]
-    if journal:
-        filtered_df = filtered_df[filtered_df["journal"] == journal]
+    if container:
+        filtered_df = filtered_df[filtered_df["container"] == container]
     if country:
         filtered_df = filtered_df[filtered_df["country"] == country]
     if institute:

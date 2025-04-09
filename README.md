@@ -80,6 +80,8 @@ with RORs instead, such as the one used in OpenAlex.
       1. Matching CrossRef metadata locally from the public dump file instead of via the CrossRef API
 1. Load cited-by data from CrossRef (or alternatively OpenAlex) to create a second enriched dataset of “papers citing retractions”.
    1. Idea: create a weighted citation factor per paper / author / journal based only on citations to retracted papers (the further away the retracted paper, the more discounted: direct citation paper → retracted paper; discounted citation paper → paper → retracted paper, etc.)
+1. Fix some bugs:
+   1. At some point in one of the pipelines the dumping of the dataframe to parquet converts the retraction reasons from array to string. The array format should be retrained for subsequent analysis.
 1. Some retractions’ original paper DOI are not registered by CrossRef but by other registration agencies such as DataCite or mEDRA (example).
 1. Load the dataset into a ElasticSearch or Solr index for better query / facet-based refinement and analysis based on user’s input.
 1. Write proper pipelines in proper Python 😅

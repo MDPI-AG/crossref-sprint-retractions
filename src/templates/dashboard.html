@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Retractions Dataset</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+
+<body>
+    <div id="header">
+        <div id="logo">
+            <img src="/static/logo.png" alt="Logo" width="142" height="auto" />
+        </div>
+        <div id="title">
+            <h1>Retractions Dataset</h1>
+        </div>
+    </div>
+    <div id="main">
+        <form id="filters" method="GET" action="/dashboard">
+            <p class="note">Choose filters to analyze retraction data:</p>
+            
+            {% for filter in allowed_values %}
+                <div class="filter">
+                    <label for="year">{{ filter.label }}</label>
+                    <select name="{{ filter.param }}" id="year">
+                        <option value="">All</option>
+                        {% for option in filter.options %}
+                            <option value="{{ option }}">{{ option }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            {% endfor %}
+            <button type="submit">Analyze</button>
+        </form>
+    </div>
+    <div id="footer">
+        This is the output of a 2-day hackathon based on a data sample of 5000 retractions from CrossRef Retraction Watch data.
+        <a href="https://github.com/MDPI-AG/crossref-sprint-retractions" target="_blank">Beware the obvious limitations.</a>
+    </div>
+</body>
+
+</html>

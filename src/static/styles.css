@@ -1,0 +1,105 @@
+@import url('https://pub.mdpi-res.com/assets/fonts/suisse/fonts.css');
+
+* {
+    box-sizing: border-box;
+}
+
+html {
+    font-size: 62.5%;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: "Suisse Int'l", Arial, Helvetica, sans-serif;
+    font-size: 1.5rem;
+    line-height: 1.25;
+    background: #f4f5f2;
+    margin: 0;
+    padding: 0;
+}
+
+#header,
+#footer {
+    display: flex;
+    margin: 0 auto;
+    padding: 3rem 1rem 3rem 1rem;
+    width: 100vw;
+    max-width: 1024px;
+    gap: 2rem;
+}
+
+#footer {
+    justify-content: center;
+    align-items: center;
+    font-size: 1.2rem;
+}
+
+#logo {
+    width: fit-content;
+    flex-grow: 0;
+    flex-shrink: 0;
+    padding-right: 1rem;
+}
+
+#main {
+    display: block;
+    margin: 0 auto;
+    padding: 3rem;
+    width: 100vw;
+    max-width: 1024px;
+    background: white;
+    border-radius: 5px;
+    box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.05);
+}
+
+h1 {
+    font-size: 2.4rem;
+    font-weight: 500;
+    margin-bottom: 2rem;
+    color: #0d58c9;
+}
+
+h2 {
+    font-size: 2rem;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    margin-top: 1rem;
+}
+
+p {
+    max-width: 85ch;
+    margin-bottom: 1rem;
+}
+
+form .note {
+    margin-bottom: 4rem;
+}
+
+form .filter {
+    display: flex;
+    flex-direction: row;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.filter label {
+    font-size: 1.6rem;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    width: 200px;
+    flex-grow: 0;
+    flex-shrink: 0;
+}
+
+.filter select {
+    font-size: 1.6rem;
+    padding: 0.5rem;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    background-color: white;
+    color: #333;
+    width: 100%;
+    flex-grow: 1;
+    flex-shrink: 1;
+}
