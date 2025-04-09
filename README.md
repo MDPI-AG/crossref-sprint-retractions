@@ -1,22 +1,25 @@
 # CrossRef Metadata Sprint 2025, Madrid
 
-This is reüpository with the outcomes of a 2-day hackathon at the CrossRef Metadata
+This is repository with the outcomes of a 2-day hackathon at the CrossRef Metadata
 Sprint 2025 in Madrid, Spain. Due the obvious time constraints, the artefacts are
 very much prototypical.
 
 ## Retractions Data Analysis
 
-Purpose: Connect Retraction Watch (RW) data set with references and cited-by
-data from CrossRef; e.g. analyze the doi prefixes citing retracted papers
-pre- and post-retraction.
+Goal: Connect Retraction Watch (RW) data set with metadata from CrossRef, ROR,
+OpenAlex, etc.; to e.g. analyze the doi prefixes citing retracted papers pre- and
+post-retraction; analyze evolution of the number of retractions per prefix / publisher
+/ journal / institute / funder / country / region; etc.
 
-# Running the Analysis
+![Solution Overview](solution-overview.png)
 
-## Prerequisites
+## Running the Analysis
+
+### Prerequisites
 
 Have a local copy of ROR-API running via Docker: https://github.com/ror-community/ror-api#readme
 
-## Setup Your Local Environment
+### Setup Your Local Environment
 
 1. Clone the repository
 1. Active venv environment:
@@ -28,7 +31,7 @@ Have a local copy of ROR-API running via Docker: https://github.com/ror-communit
    pip install -r requirements.txt
    ```
 
-## Runing the Pipelines
+### Runing the Pipelines
 
 1. Run the pipeline to ETL the RW data set:
    ```bash
@@ -51,7 +54,7 @@ Have a local copy of ROR-API running via Docker: https://github.com/ror-communit
    python src/pipeline_cr.py
    ```
 
-# Running the Web App
+### Running the Web App
 
 1. Run the web app:
    ```bash
@@ -59,25 +62,29 @@ Have a local copy of ROR-API running via Docker: https://github.com/ror-communit
    ```
    Then open the browser at `http://localhost:8000/` to see the prototype analysis UI.
 
-# Limitations / Possible Improvements
+## Limitations / Possible Improvements
 
 We use ROR API first returned item for affiliation matching, which is strongly advised against
 by the ROR documentation. We should use a proper machine learning model to match the affiliations
 with RORs instead, such as the one used in OpenAlex.
 
-## Possible improvements:
+### Possible improvements:
 
 1. Affiliation matching from ROR: using a Machine Learning model such as those employed by OpenAlex
+1. Funder data from CrossRef: we use the first item returned by the CrossRef works API, but do not follow
+   funder hierarchy. Ideally we should use the hierarchy data so that retractions can be reconciliated on
+   higher funder levels (such as a national funder level).
 1. Solution performance and scaling:
-   1. Matching affiliations locally instead of via ROR API to scale the solutions to larger dataset
-   1. Matching CrossRef metadata locally from the public dump file instead of via the CrossRef API
+   1. We do lots of API-based look-ups, which may fail with non 200 http codes for various reasons (not robust and not performant):
+      1. Matching affiliations locally instead of via ROR API to scale the solutions to larger dataset
+      1. Matching CrossRef metadata locally from the public dump file instead of via the CrossRef API
 1. Load cited-by data from CrossRef (or alternatively OpenAlex) to create a second enriched dataset of “papers citing retractions”.
    1. Idea: create a weighted citation factor per paper / author / journal based only on citations to retracted papers (the further away the retracted paper, the more discounted: direct citation paper → retracted paper; discounted citation paper → paper → retracted paper, etc.)
 1. Some retractions’ original paper DOI are not registered by CrossRef but by other registration agencies such as DataCite or mEDRA (example).
 1. Load the dataset into a ElasticSearch or Solr index for better query / facet-based refinement and analysis based on user’s input.
 1. Write proper pipelines in proper Python 😅
 
-# Notes
+## Notes
 
 General note: articles in RW may not have a DOI that is registered in CrossRef.
 We need to check if the DOI is registered in CrossRef.

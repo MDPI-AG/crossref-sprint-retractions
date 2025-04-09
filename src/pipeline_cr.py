@@ -51,10 +51,15 @@ def fetch_cr_data(doi: str) -> dict:
         data = response.json()
         msg = data['message']
 
+        funder = None
+        if 'funder' in msg:
+            funder = msg['funder'][0]['name'] if isinstance(msg['funder'], list) and len(msg['funder']) > 0 else msg['funder']['name']
+
         return {
             "articletype": msg['type'],
             "container": isinstance(msg['container-title'], list) and msg['container-title'][0] or msg['container-title'],
             "publisher": msg['publisher'],
+            "funder": funder,
             "prefix": msg['prefix'],
         }
     else:
@@ -68,7 +73,7 @@ def extract_cr_data(df_rw: pd.DataFrame) -> pd.DataFrame:
     print("Extracting CrossRef data...")
 
     # make sure the columns exist in the DataFrame
-    fields = ["articletype", "container", "publisher", "prefix"]
+    fields = ["articletype", "container", "publisher", "prefix", "funder"]
     for field in fields:
         if field not in df_rw.columns:
             df_rw[field] = pd.Series(dtype=pd.StringDtype())
@@ -94,7 +99,6 @@ def extract_cr_data(df_rw: pd.DataFrame) -> pd.DataFrame:
 
         if count % 100 == 0:
             print(f"Processed {count} rows...")
-            return df_rw
 
     print(f"Processed {count} rows in total.")
 
