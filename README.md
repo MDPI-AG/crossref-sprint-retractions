@@ -11,6 +11,8 @@ OpenAlex, etc.; to e.g. analyze the doi prefixes citing retracted papers pre- an
 post-retraction; analyze evolution of the number of retractions per prefix / publisher
 / journal / institute / funder / country / region; etc.
 
+![Screenshot](screenshot.png)
+
 ![Solution Overview](solution-overview.png)
 
 ## Running the Analysis
