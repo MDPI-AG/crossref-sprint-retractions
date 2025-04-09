@@ -56,11 +56,18 @@ Have a local copy of ROR-API running via Docker: https://github.com/ror-communit
 
 ### Running the Web App
 
-1. Run the web app:
+1. Run the web app for development:
+
    ```bash
    fastapi dev src/app.py
    ```
-   Then open the browser at `http://localhost:8000/` to see the prototype analysis UI.
+
+1. Run with paralell workers:
+   ```bash
+   python src/app.py
+   ```
+
+Then open the browser at `http://localhost:8000/` to see the prototype analysis UI.
 
 ## Limitations / Possible Improvements
 

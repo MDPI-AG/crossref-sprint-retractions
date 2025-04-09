@@ -4,6 +4,7 @@ from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from typing import Optional
 import pandas as pd
+import numpy as np
 import io
 import os
 from fastapi.responses import StreamingResponse
@@ -52,24 +53,14 @@ allowed_values = [
         "options": df["container"].unique()
     },
     {
-        "param": "country",
-        "label": "Country Name",
-        "options": df["rorcountries"].unique()
-    },
-    {
-        "param": "institute",
-        "label": "Institute Name",
-        "options": df["rornames"].unique()
-    },
-    {
         "param": "funder",
         "label": "Funder Name",
         "options": df["funder"].unique()
     },
     {
-        "param": "retraction_reason",
+        "param": "retraction_type",
         "label": "Retraction Type",
-        "options": df["reason"].unique()
+        "options": df["retractionnature"].unique()
     },
 ]
 
@@ -78,6 +69,41 @@ for allowed_value in allowed_values:
     allowed_value["options"] = [str(value) for value in allowed_value["options"]]
     allowed_value["options"] = sorted(allowed_value["options"])
 
+def get_filtered_df(
+        publisher = None,
+        prefix = None,
+        container = None,
+        funder = None,
+        retraction_type = None
+):
+    filtered_df = df.copy()
+    if publisher:
+        filtered_df = filtered_df[filtered_df["publisher"] == publisher]
+    if prefix:
+        filtered_df = filtered_df[filtered_df["prefix"] == prefix]
+    if container:
+        filtered_df = filtered_df[filtered_df["container"] == container]
+    if funder:
+        filtered_df = filtered_df[filtered_df["funder"] == funder]
+    if retraction_type:
+        filtered_df = filtered_df[filtered_df["retractionnature"] == retraction_type]
+
+    return filtered_df
+
+def get_chart_title(title = "", publisher = None, prefix = None, container = None, funder = None, retraction_type = None):
+    if publisher:
+        title += f" - Publisher: {publisher}"
+    if prefix:
+        title += f" - DOI Prefix: {prefix}"
+    if container:
+        title += f" - Container Title: {container}"
+    if funder:
+        title += f" - Funder: {funder}"
+    if retraction_type:
+        title += f" - Retraction Type: {retraction_type}"
+
+    return title
+
 @app.get("/", response_class=HTMLResponse)
 async def dashboard(request: Request):
     return templates.TemplateResponse("dashboard.html", {
@@ -85,43 +111,90 @@ async def dashboard(request: Request):
         "allowed_values": allowed_values,
     })
 
-@app.get("/create-chart")
-def create_chart(
+@app.get("/chart-year")
+async def create_chart_year(
     publisher: Optional[str] = Query(None),
+    prefix: Optional[str] = Query(None),
     container: Optional[str] = Query(None),
-    country: Optional[str] = Query(None),
-    institute: Optional[str] = Query(None),
     funder: Optional[str] = Query(None),
-    retraction_reason: Optional[str] = Query(None),
+    retraction_type: Optional[str] = Query(None),
 ):
-    # Filter the DataFrame based on the provided query parameters
-    filtered_df = df.copy()
-    if publisher:
-        filtered_df = filtered_df[filtered_df["publisher"] == publisher]
-    if container:
-        filtered_df = filtered_df[filtered_df["container"] == container]
-    if country:
-        filtered_df = filtered_df[filtered_df["country"] == country]
-    if institute:
-        filtered_df = filtered_df[filtered_df["institute"] == institute]
-    if funder:
-        filtered_df = filtered_df[filtered_df["funder"] == funder]
-    if retraction_reason:
-        filtered_df = filtered_df[filtered_df["retraction_reason"] == retraction_reason]
+    filtered_df = get_filtered_df(
+        publisher,
+        prefix,
+        container,
+        funder,
+        retraction_type
+    )
 
-    # Create a simple chart (e.g., bar chart of values)
+    # Create a chart by year from 'originalpaperdate'
+    filtered_df["year"] = pd.to_datetime(filtered_df["originalpaperdate"]).dt.year
+    filtered_df["value"] = 1
+    filtered_df = filtered_df.groupby("year").sum().reset_index()
+    filtered_df = filtered_df.set_index("year")
+
+    # Define full range of years (e.g. from min to max year)
+    year_range = range(filtered_df.index.min(), filtered_df.index.max() + 1)
+
+    # Reindex to include all years, fill missing with 0
+    filtered_df = filtered_df.reindex(year_range, fill_value=0)
+    filtered_df = filtered_df.sort_index()
+
+    # Plot
     plt.figure(figsize=(10, 6))
     filtered_df["value"].plot(kind="bar")
-    plt.title("Filtered Data Chart")
-    plt.xlabel("Index")
+    plt.title(get_chart_title("Evolution by Year", publisher, prefix, container, funder, retraction_type))
+    plt.xlabel("Year")
     plt.ylabel("Value")
     plt.tight_layout()
 
-    # Save the chart to a BytesIO object
-    buf = io.BytesIO()
-    plt.savefig(buf, format="png")
-    buf.seek(0)
+    # Save chart to a temporary file and return it
+    temp_file = "chart_year.png"
+    plt.savefig(temp_file, format="png")
     plt.close()
 
-    # Return the chart as a streaming response
-    return StreamingResponse(buf, media_type="image/png")
+    # Open the file and send it as a response
+    return StreamingResponse(open(temp_file, "rb"), media_type="image/png")
+
+@app.get("/chart-article-type")
+async def create_chart_year(
+    publisher: Optional[str] = Query(None),
+    prefix: Optional[str] = Query(None),
+    container: Optional[str] = Query(None),
+    funder: Optional[str] = Query(None),
+    retraction_type: Optional[str] = Query(None),
+):
+    filtered_df = get_filtered_df(
+        publisher,
+        prefix,
+        container,
+        funder,
+        retraction_type
+    )
+
+    # Create a bar chart by 'articletype'
+    filtered_df["value"] = 1
+    filtered_df = filtered_df.groupby("articletype").sum().reset_index()
+    filtered_df = filtered_df.set_index("articletype")
+    filtered_df = filtered_df.sort_index()
+
+    # Plot
+    plt.figure(figsize=(10, 6))
+    filtered_df["value"].plot(kind="bar")
+    plt.title(get_chart_title("Evolution by Article Type", publisher, prefix, container, funder, retraction_type))
+    plt.xlabel("Article Type")
+    plt.ylabel("Value")
+    plt.tight_layout()
+
+    # Save chart to a temporary file and return it
+    temp_file = "chart_article_type.png"
+    plt.savefig(temp_file, format="png")
+    plt.close()
+
+    # Open the file and send it as a response
+    return StreamingResponse(open(temp_file, "rb"), media_type="image/png")
+
+
+if __name__ == '__main__':
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)

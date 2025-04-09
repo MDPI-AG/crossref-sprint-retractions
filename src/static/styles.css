@@ -42,6 +42,14 @@ body {
     padding-right: 1rem;
 }
 
+#title {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+}
+
 #main {
     display: block;
     margin: 0 auto;
@@ -53,11 +61,19 @@ body {
     box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.05);
 }
 
+#results {
+    margin-top: 5rem;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+    justify-items: center;
+}
+
 h1 {
     font-size: 2.4rem;
     font-weight: 500;
     margin-bottom: 2rem;
-    color: #0d58c9;
+    color: #e1594c;
 }
 
 h2 {

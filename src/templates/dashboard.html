@@ -6,12 +6,77 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Retractions Dataset</title>
     <link rel="stylesheet" href="/static/styles.css">
+    <script>
+        const plots = [
+            {
+                name: "year",
+                dom: "#chart_year",
+                url: "/chart-year",
+            },
+            {
+                name: "article_type",
+                dom: "#chart_article_type",
+                url: "/chart-article-type",
+            }
+        ];
+
+        const filters = [
+        {% for filter in allowed_values %}
+            {
+                "dom": "#filter_{{ filter.param }}",
+                "param": "{{ filter.param }}",
+            },
+        {% endfor %}
+        ];
+
+        function updatePlots() {
+            filterString = "";
+            filters.forEach(filter => {
+                const select = document.querySelector(`${filter.dom}`);
+                const value = select.options[select.selectedIndex].value;
+                if (value) {
+                    filterString += `${filter.param}=${value}&`;
+                }
+            });
+
+            console.log(filterString);
+
+            plots.forEach(plot => {
+                console.error(plot.dom);
+                const chartUrl = `${plot.url}?${filterString}`;
+                const container = document.querySelector(`${plot.dom}`);
+
+                if (container === null) {
+                    console.error(`Container ${plot.dom} not found`);
+                    return;
+                }
+
+                // update first a.href
+                const a = container.querySelector('a');
+                a.href = chartUrl;
+
+                // update first img.src
+                const img = container.querySelector('img');
+                img.src = chartUrl;
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            updatePlots();
+
+            const button = document.querySelector('#analyze');
+            button.addEventListener('click', function (event) {
+                event.preventDefault();
+                updatePlots();
+            });
+        });
+    </script>
 </head>
 
 <body>
     <div id="header">
         <div id="logo">
-            <img src="/static/logo.png" alt="Logo" width="142" height="auto" />
+            <img src="/static/logo.png" alt="Logo" width="140" height="auto" />
         </div>
         <div id="title">
             <h1>Retractions Dataset</h1>
@@ -20,11 +85,10 @@
     <div id="main">
         <form id="filters" method="GET" action="/dashboard">
             <p class="note">Choose filters to analyze retraction data:</p>
-            
             {% for filter in allowed_values %}
                 <div class="filter">
                     <label for="year">{{ filter.label }}</label>
-                    <select name="{{ filter.param }}" id="year">
+                    <select name="{{ filter.param }}" id="filter_{{ filter.param }}">
                         <option value="">All</option>
                         {% for option in filter.options %}
                             <option value="{{ option }}">{{ option }}</option>
@@ -32,9 +96,25 @@
                     </select>
                 </div>
             {% endfor %}
-            <button type="submit">Analyze</button>
+            <button id="analyze" type="submit" class="rounded">Analyze</button>
         </form>
+        <div id="results">
+            <div id="chart_year">
+                <p>Evolution by year</p>
+                <a href="/chart-year" target="_blank">
+                    <img src="/chart-year" width="100%" style="height:auto;" />
+                </a>
+            </div>
+
+            <div id="chart_article_type">
+                <p>Breakdown by article type</p>
+                <a href="/chart-article-type" target="_blank">
+                    <img src="/chart-article-type" width="100%" style="height:auto;" />
+                </a>
+            </div>
+        </div>
     </div>
+
     <div id="footer">
         This is the output of a 2-day hackathon based on a data sample of 5000 retractions from CrossRef Retraction Watch data.
         <a href="https://github.com/MDPI-AG/crossref-sprint-retractions" target="_blank">Beware the obvious limitations.</a>
