@@ -12,32 +12,54 @@ pre- and post-retraction.
 
 Have a local copy of ROR-API running via Docker: https://github.com/ror-community/ror-api#readme
 
-## Setup
+## Setup Your Local Environment
 
 1. Clone the repository
 1. Active venv environment:
    ```bash
    source .venv/bin/activate
    ```
-1. Install the requirements:
+1. Install the Python dependencies:
    ```bash
    pip install -r requirements.txt
    ```
 
-## Runing the Scripts
+## Runing the Pipelines
 
 1. Run the pipeline to ETL the RW data set:
    ```bash
    python src/pipeline_rw.py
    ```
+1. Sample the RW date set (optional):
+   ```bash
+   python src/pipeline_sample.py
+   ```
 1. Run the pipeline to match ROR IDs for affiliations:
    ```bash
    python src/pipeline_ror.py
    ```
-1. Dig into the RW data set:
+1. Merge back ROR data into the RW data set:
    ```bash
-   python src/analyze_rw_dataset.py
+   python src/pipeline_rw_ror.py
    ```
+1. Fetch CrossRef data for the RW data set:
+   ```bash
+   python src/pipeline_cr.py
+   ```
+
+# Running the Web App
+
+1. Run the web app:
+   ```bash
+   fastapi dev src/app.py
+   ```
+   Then open the browser at `http://localhost:8000/` to see the prototype analysis UI.
+
+# Limitations
+
+We use ROR API first returned item for affiliation matching, which is strongly advised against
+by the ROR documentation. We should use a proper machine learning model to match the affiliations
+with RORs instead, such as the one used in OpenAlex.
 
 # Notes
 

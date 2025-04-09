@@ -12,7 +12,7 @@ from datetime import datetime
 
 OUTPUT_DIR = "data"
 
-INPUT_PARQUET_ETL = os.path.join(OUTPUT_DIR, "retraction_watch_etl.parquet")
+INPUT_PARQUET_ETL = os.path.join(OUTPUT_DIR, "retraction_watch_etl_sampled.parquet")
 OUTPUT_PARQUET_ETL = os.path.join(OUTPUT_DIR, "ror_etl.parquet")
 OUTPUT_CSV_ETL = os.path.join(OUTPUT_DIR, "ror_etl.csv")
 
@@ -85,16 +85,18 @@ def get_ror_data(df_ror: pd.DataFrame, df_rw: pd.DataFrame) -> pd.DataFrame:
             # check for ror_data.items and get first item
             if 'items' in ror_data and isinstance(ror_data['items'], list) and len(ror_data['items']) > 0:
                 item = ror_data['items'][0]
-                
                 ror_id = item['id']
                 
                 name = None
-                if 'name' in item and len(item['name']) > 0:
-                    for name_obj in item['name']:
-                        if 'types' in name_obj and 'ror_display' in name_obj['types']:
-                            name = name_obj['value']
+                if 'name' in item:
+                    name = item['name']
+                elif 'names' in item and len(item['names']) > 0:
+                    # loop item[names] to find first with types[] that contains 'ror_display'
+                    for name_item in item['names']:
+                        if 'types' in name_item and ('ror_display' in name_item['types']):
+                            name = name_item['value']
                             break
-                
+
                 country = None
                 region = None
                 if 'locations' in item and len(item['locations']) > 0:
@@ -110,6 +112,7 @@ def get_ror_data(df_ror: pd.DataFrame, df_rw: pd.DataFrame) -> pd.DataFrame:
                     'country': country,
                     'region': region
                 }])
+
                 df_ror = pd.concat([df_ror, new_row], ignore_index=True)
             else:
                 print(f"No ROR data found for institution: {institution}")

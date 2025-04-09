@@ -7,8 +7,8 @@ import pandas as pd
 
 INOUT_DIR = "data"
 INPUT_ROR_PARQUET = os.path.join(INOUT_DIR, "ror_etl.parquet")
-OUTPUT_RW_PARQUET = os.path.join(INOUT_DIR, "retraction_watch_etl.parquet")
-OUTPUT_RW_CSV = os.path.join(INOUT_DIR, "retraction_watch_etl.csv")
+OUTPUT_RW_PARQUET = os.path.join(INOUT_DIR, "retraction_watch_etl_sampled.parquet")
+OUTPUT_RW_CSV = os.path.join(INOUT_DIR, "retraction_watch_etl_sampled.csv")
 
 def load_parquet(file_path: str):
     """
