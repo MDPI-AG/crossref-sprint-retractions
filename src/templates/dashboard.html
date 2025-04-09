@@ -84,7 +84,7 @@
     </div>
     <div id="main">
         <form id="filters" method="GET" action="/dashboard">
-            <p class="note">Choose filters to analyze retraction data:</p>
+            <p class="note">Choose filters to analyze retraction data <strong>[sampled data of ca. 5000 retractions]</strong>:</p>
             {% for filter in allowed_values %}
                 <div class="filter">
                     <label for="year">{{ filter.label }}</label>
