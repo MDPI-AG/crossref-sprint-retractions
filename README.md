@@ -1,4 +1,8 @@
-# CrossRef Metadata Sprint, Madrid
+# CrossRef Metadata Sprint 2025, Madrid
+
+This is reüpository with the outcomes of a 2-day hackathon at the CrossRef Metadata
+Sprint 2025 in Madrid, Spain. Due the obvious time constraints, the artefacts are
+very much prototypical.
 
 ## Retractions Data Analysis
 
@@ -55,11 +59,23 @@ Have a local copy of ROR-API running via Docker: https://github.com/ror-communit
    ```
    Then open the browser at `http://localhost:8000/` to see the prototype analysis UI.
 
-# Limitations
+# Limitations / Possible Improvements
 
 We use ROR API first returned item for affiliation matching, which is strongly advised against
 by the ROR documentation. We should use a proper machine learning model to match the affiliations
 with RORs instead, such as the one used in OpenAlex.
+
+## Possible improvements:
+
+1. Affiliation matching from ROR: using a Machine Learning model such as those employed by OpenAlex
+1. Solution performance and scaling:
+   1. Matching affiliations locally instead of via ROR API to scale the solutions to larger dataset
+   1. Matching CrossRef metadata locally from the public dump file instead of via the CrossRef API
+1. Load cited-by data from CrossRef (or alternatively OpenAlex) to create a second enriched dataset of “papers citing retractions”.
+   1. Idea: create a weighted citation factor per paper / author / journal based only on citations to retracted papers (the further away the retracted paper, the more discounted: direct citation paper → retracted paper; discounted citation paper → paper → retracted paper, etc.)
+1. Some retractions’ original paper DOI are not registered by CrossRef but by other registration agencies such as DataCite or mEDRA (example).
+1. Load the dataset into a ElasticSearch or Solr index for better query / facet-based refinement and analysis based on user’s input.
+1. Write proper pipelines in proper Python 😅
 
 # Notes
 
